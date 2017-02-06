@@ -20,7 +20,6 @@ public class TokenAc2dmResource {
 
     public String handle(Request request, Response response) {
         email = request.params("email");
-        getApi().setGsfId(null);
         String password = Server.passwords.get(email);
         if (null == password || password.isEmpty()) {
             halt(404, "No password for this email");
