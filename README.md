@@ -7,7 +7,7 @@ Stores email-password pairs, gives out Google Play Store tokens
 2. `cd token-dispenser`
 3. Edit `src/main/resources/config.properties`
 4. `mvn install`
-5. `java -jar target/token-dispenser-0.2.jar`
+5. `java -jar target/token-dispenser.jar`
 
 ### Configuration
 
