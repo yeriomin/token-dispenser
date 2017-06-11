@@ -7,14 +7,14 @@ import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-class PasswordsDb {
+class PasswordsDbMongo implements PasswordsDbInterface {
 
     static private final String FIELD_EMAIL = "email";
     static private final String FIELD_PASSWORD = "password";
 
     private DBCollection collection;
 
-    PasswordsDb(Properties config) {
+    public PasswordsDbMongo(Properties config) {
         String host = config.getProperty(Server.PROPERTY_MONGODB_HOST, "");
         int port = Integer.parseInt(config.getProperty(Server.PROPERTY_MONGODB_PORT, "0"));
         String username = config.getProperty(Server.PROPERTY_MONGODB_USERNAME, "");
@@ -36,7 +36,8 @@ class PasswordsDb {
         collection = mongoDb.getCollection(collectionName);
     }
 
-    String get(String email) {
+    @Override
+    public String get(String email) {
         BasicDBObject query = new BasicDBObject(FIELD_EMAIL, email);
         DBObject object = collection.findOne(query);
         String password = null;
@@ -46,11 +47,11 @@ class PasswordsDb {
         return password;
     }
 
-    void put(String email, String password) {
+    @Override
+    public void put(String email, String password) {
         DBObject object = new BasicDBObject();
         object.put(FIELD_EMAIL, email);
         object.put(FIELD_PASSWORD, password);
         collection.insert(object);
     }
-
 }

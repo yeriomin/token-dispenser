@@ -12,6 +12,8 @@ public class Server {
 
     static final String PROPERTY_SPARK_HOST = "spark-host";
     static final String PROPERTY_SPARK_PORT = "spark-port";
+    static final String PROPERTY_STORAGE = "storage";
+    static final String PROPERTY_STORAGE_PLAINTEXT_PATH = "storage-plaintext-path";
     static final String PROPERTY_MONGODB_HOST = "mongodb-host";
     static final String PROPERTY_MONGODB_PORT = "mongodb-port";
     static final String PROPERTY_MONGODB_USERNAME = "mongodb-username";
@@ -19,7 +21,10 @@ public class Server {
     static final String PROPERTY_MONGODB_DB = "mongodb-databaseNameStorage";
     static final String PROPERTY_MONGODB_COLLECTION = "mongodb-collectionName";
 
-    static PasswordsDb passwords;
+    static public final String STORAGE_MONGODB = "mongodb";
+    static public final String STORAGE_PLAINTEXT = "plaintext";
+
+    static PasswordsDbInterface passwords;
 
     public static void main(String[] args) {
         Properties config = getConfig();
@@ -33,14 +38,14 @@ public class Server {
         ipAddress(host);
         port(port);
         after((request, response) -> response.type("text/plain"));
-        Server.passwords = new PasswordsDb(config);
+        Server.passwords = PasswordsDbFactory.get(config);
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
         get("/token-ac2dm/email/:email", (req, res) -> new TokenAc2dmResource().handle(req, res));
     }
 
     static Properties getConfig() {
         Properties properties = new Properties();
-        try (InputStream input = PasswordsDb.class.getResourceAsStream(CONFIG_FILE)) {
+        try (InputStream input = PasswordsDbMongo.class.getResourceAsStream(CONFIG_FILE)) {
             properties.load(input);
         } catch (IOException ex) {
             ex.printStackTrace();
