@@ -7,6 +7,7 @@
     <groupId>com.github.yeriomin</groupId>
     <artifactId>token-dispenser</artifactId>
     <version>0.2</version>
+    <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,6 +54,7 @@
     </dependencies>
 
     <build>
+        <finalName>token-dispenser</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

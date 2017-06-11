@@ -1,0 +1,8 @@
+#!/bin/bash
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+# The logic to stop your application should be put in this script.
+#it survived, try to kill java
+if [[ -n `ps -A | grep java` ]]; then
+	pkill -SIGTERM java
+fi
+exit 0
