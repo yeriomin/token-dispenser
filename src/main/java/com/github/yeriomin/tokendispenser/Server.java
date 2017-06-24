@@ -1,5 +1,8 @@
 package com.github.yeriomin.tokendispenser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -11,6 +14,8 @@ import static spark.Spark.notFound;
 import static spark.Spark.port;
 
 public class Server {
+
+    static public final Logger LOG = LoggerFactory.getLogger(Server.class.getName());
 
     static private final String CONFIG_FILE = "/config.properties";
 

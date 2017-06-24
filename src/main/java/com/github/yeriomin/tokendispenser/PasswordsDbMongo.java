@@ -30,12 +30,12 @@ class PasswordsDbMongo implements PasswordsDbInterface {
         try {
             mongo = new Mongo(host, port);
         } catch (UnknownHostException e) {
-            System.out.println("UnknownHostException: " + e.getMessage());
+            Server.LOG.error("UnknownHostException: " + e.getMessage());
             return;
         }
         DB mongoDb = mongo.getDB(databaseNameStorage);
         if (!mongoDb.authenticate(username, password.toCharArray())) {
-            System.out.println("Failed to authenticate against db: " + databaseNameStorage);
+            Server.LOG.error("Failed to authenticate against db: " + databaseNameStorage);
             return;
         }
         collection = mongoDb.getCollection(collectionName);

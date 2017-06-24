@@ -108,7 +108,7 @@ class OkHttpClientAdapter extends HttpClientAdapter {
         Request request = requestBuilder
             .headers(Headers.of(headers))
             .build();
-        System.out.println("Requesting: " + request.url().toString());
+        Server.LOG.info("Requesting: " + request.url().toString());
 
         Response response = client.newCall(request).execute();
 

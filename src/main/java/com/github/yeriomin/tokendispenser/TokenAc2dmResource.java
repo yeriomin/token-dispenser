@@ -7,7 +7,6 @@ import com.github.yeriomin.playstoreapi.PropertiesDeviceInfoProvider;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import spark.Request;
 import spark.Response;
@@ -31,11 +30,11 @@ public class TokenAc2dmResource {
                 code = e.getCode();
             }
             message = e.getMessage();
-            Logger.getGlobal().warning(e.getClass().getName() + ": " + message);
+            Server.LOG.warn(e.getClass().getName() + ": " + message);
             halt(code, message);
         } catch (IOException e) {
             message = e.getMessage();
-            Logger.getGlobal().warning(e.getClass().getName() + ": " + message);
+            Server.LOG.error(e.getClass().getName() + ": " + message);
             halt(code, message);
         }
         return "";

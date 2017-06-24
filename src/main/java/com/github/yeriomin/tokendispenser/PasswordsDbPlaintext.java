@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import java.util.logging.Logger;
 
 public class PasswordsDbPlaintext implements PasswordsDbInterface {
 
@@ -24,7 +23,7 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
         try {
             readStorage();
         } catch (IOException e) {
-            Logger.getGlobal().warning("Could not read " + path);
+            Server.LOG.error("Could not read " + path);
         }
     }
 
@@ -36,7 +35,7 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
 
     @Override
     public String get(String email) {
-        Logger.getGlobal().info(email + (passwords.containsKey(email) ? "" : " NOT") + " found");
+        Server.LOG.info(email + (passwords.containsKey(email) ? "" : " NOT") + " found");
         return passwords.get(email);
     }
 
@@ -46,18 +45,18 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
         try {
             writeStorage();
         } catch (IOException e) {
-            Logger.getGlobal().warning("Could not write to " + path);
+            Server.LOG.error("Could not write to " + path);
         }
     }
 
     private void readStorage() throws IOException {
-        Logger.getGlobal().info("Reading " + path);
+        Server.LOG.info("Reading " + path);
         int lineNum = 0;
         for (String line: Files.readAllLines(Paths.get(path))) {
             lineNum++;
             String[] pair = line.split(FIELD_SEPARATOR);
             if (pair.length != 2) {
-                Logger.getGlobal().warning("Line " + lineNum + " is invalid");
+                Server.LOG.warn("Line " + lineNum + " is invalid");
                 continue;
             }
             passwords.put(pair[0], pair[1]);
@@ -65,7 +64,7 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
     }
 
     private void writeStorage() throws IOException {
-        Logger.getGlobal().info("Writing to " + path);
+        Server.LOG.info("Writing to " + path);
         StringBuilder builder = new StringBuilder();
         for (String username: passwords.keySet()) {
             builder.append(username).append(FIELD_SEPARATOR).append(passwords.get(username)).append(LINE_SEPARATOR);
