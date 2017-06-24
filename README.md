@@ -29,4 +29,4 @@ There are two storage options supported:
 
 ### Usage
 Once server is configured, you can get the tokens for **regular requests** at http://server-address:port/token/email/youremail@gmail.com
-and tokens for **checkinn requests** at http://server-address:port/token-ac2dm/email/youremail@gmail.com
+and tokens for **checkin requests** at http://server-address:port/token-ac2dm/email/youremail@gmail.com
