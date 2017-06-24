@@ -7,6 +7,7 @@ import java.util.Properties;
 import static spark.Spark.after;
 import static spark.Spark.get;
 import static spark.Spark.ipAddress;
+import static spark.Spark.notFound;
 import static spark.Spark.port;
 
 public class Server {
@@ -41,6 +42,7 @@ public class Server {
         }
         ipAddress(host);
         port(port);
+        notFound("Not found");
         after((request, response) -> response.type("text/plain"));
         Server.passwords = PasswordsDbFactory.get(config);
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
