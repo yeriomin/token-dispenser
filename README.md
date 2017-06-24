@@ -27,5 +27,6 @@ There are two storage options supported:
 * **Plain text** Set `storage` to `plaintext` to use it. `storage-plaintext-path` property is used to store filesystem path to a plain text file with email-password pairs. There is an example [here](/passwords.txt). Securing it is up to you.
 * **MongoDB** Set `storage` to `mongodb` to use it. Configurable parameters are self-explanatory.
 
-#### Usage
-Once server is configured, you can get the tokens at http://server-address:port/token/email/youremail@gmail.com
+### Usage
+Once server is configured, you can get the tokens for **regular requests** at http://server-address:port/token/email/youremail@gmail.com
+and tokens for **checkinn requests** at http://server-address:port/token-ac2dm/email/youremail@gmail.com
