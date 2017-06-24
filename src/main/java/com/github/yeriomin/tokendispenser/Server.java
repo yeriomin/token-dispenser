@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import static spark.Spark.after;
+import static spark.Spark.before;
 import static spark.Spark.get;
 import static spark.Spark.ipAddress;
 import static spark.Spark.notFound;
@@ -48,7 +49,8 @@ public class Server {
         ipAddress(host);
         port(port);
         notFound("Not found");
-        after((request, response) -> response.type("text/plain"));
+        before((req, res) -> LOG.info(req.requestMethod() + " " + req.url()));
+        after((req, res) -> res.type("text/plain"));
         Server.passwords = PasswordsDbFactory.get(config);
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
         get("/token-ac2dm/email/:email", (req, res) -> new TokenAc2dmResource().handle(req, res));
