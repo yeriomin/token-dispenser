@@ -1,5 +1,7 @@
 # token-dispenser
-Stores email-password pairs, gives out Google Play Store tokens
+Stores email-password pairs, gives out Google Play Store tokens.
+
+Using Google Play Store API requires logging in using email and password. If you have a project which works with Google Play Store API you no longer have to make the users use their live accounts or ship your software with your account credentials inside. You can deploy a token dispenser instance and it will provide auth tokens on demand without letting the world know your password.
 
 ### Building
 
@@ -30,3 +32,8 @@ There are two storage options supported:
 ### Usage
 Once server is configured, you can get the tokens for **regular requests** at http://server-address:port/token/email/youremail@gmail.com
 and tokens for **checkin requests** at http://server-address:port/token-ac2dm/email/youremail@gmail.com
+
+### Credits
+
+* [play-store-api](https://github.com/yeriomin/play-store-api)
+* [spark](http://sparkjava.com/)
