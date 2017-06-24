@@ -1,11 +1,16 @@
 package com.github.yeriomin.tokendispenser;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 class PasswordsDbMongo implements PasswordsDbInterface {
 
@@ -34,6 +39,13 @@ class PasswordsDbMongo implements PasswordsDbInterface {
             return;
         }
         collection = mongoDb.getCollection(collectionName);
+    }
+
+    @Override
+    public String getRandomEmail() {
+        List<String> emails = new ArrayList<>();
+        collection.find().forEach((DBObject dbObject) -> emails.add((String) dbObject.get(FIELD_EMAIL)));
+        return emails.get(new Random().nextInt(emails.size()));
     }
 
     @Override

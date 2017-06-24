@@ -2,17 +2,15 @@ package com.github.yeriomin.tokendispenser;
 
 import com.github.yeriomin.playstoreapi.GooglePlayAPI;
 import com.github.yeriomin.playstoreapi.GooglePlayException;
-import com.github.yeriomin.playstoreapi.PlayStoreApiBuilder;
 import com.github.yeriomin.playstoreapi.PropertiesDeviceInfoProvider;
-import spark.HaltException;
-import spark.Request;
-import spark.Response;
-import spark.Route;
 
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import spark.Request;
+import spark.Response;
 
 import static spark.Spark.halt;
 

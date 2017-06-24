@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import static spark.Spark.*;
+import static spark.Spark.after;
+import static spark.Spark.get;
+import static spark.Spark.ipAddress;
+import static spark.Spark.port;
 
 public class Server {
 
@@ -20,6 +23,7 @@ public class Server {
     static final String PROPERTY_MONGODB_PASSWORD = "mongodb-password";
     static final String PROPERTY_MONGODB_DB = "mongodb-databaseNameStorage";
     static final String PROPERTY_MONGODB_COLLECTION = "mongodb-collectionName";
+    static final String PROPERTY_EMAIL_RETRIEVAL = "enable-email-retrieval";
 
     static public final String STORAGE_MONGODB = "mongodb";
     static public final String STORAGE_PLAINTEXT = "plaintext";
@@ -41,6 +45,9 @@ public class Server {
         Server.passwords = PasswordsDbFactory.get(config);
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
         get("/token-ac2dm/email/:email", (req, res) -> new TokenAc2dmResource().handle(req, res));
+        if (config.getProperty(PROPERTY_EMAIL_RETRIEVAL, "false").equals("true")) {
+            get("/email", (req, res) -> new EmailResource().handle(req, res));
+        }
     }
 
     static Properties getConfig() {

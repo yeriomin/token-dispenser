@@ -3,9 +3,12 @@ package com.github.yeriomin.tokendispenser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.logging.Logger;
 
 public class PasswordsDbPlaintext implements PasswordsDbInterface {
@@ -23,6 +26,12 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
         } catch (IOException e) {
             Logger.getGlobal().warning("Could not read " + path);
         }
+    }
+
+    @Override
+    public String getRandomEmail() {
+        List<String> emails = new ArrayList<>(passwords.keySet());
+        return emails.get(new Random().nextInt(emails.size()));
     }
 
     @Override
