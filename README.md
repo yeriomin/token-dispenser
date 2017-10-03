@@ -15,7 +15,7 @@ Using Google Play Store API requires logging in using email and password. If you
 
 1. Run it. `docker run --name td -d -t -p 8080:8080  yeriomin/play-store-token-dispenser:0.2`
 2. Enter container shell. `docker exec -it td bash`
-3. Edit `passwords.txt` and add your email-password pairs. One pair - one line. `nano` is included in the image.
+3. Edit `passwords/passwords.txt` and add your email-password pairs. One pair - one line. `nano` is included in the image.
 4. Exit container shell and restart the container. `docker restart td`
 
 ### Configuration
