@@ -49,7 +49,11 @@ public class Server {
         ipAddress(host);
         port(port);
         notFound("Not found");
-        before((req, res) -> LOG.info(req.requestMethod() + " " + req.url()));
+        before((req, res) -> {
+            LOG.info(req.requestMethod() + " " + req.url());
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Request-Method", "GET");
+        });
         after((req, res) -> res.type("text/plain"));
         Server.passwords = PasswordsDbFactory.get(config);
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
