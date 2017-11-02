@@ -63,6 +63,11 @@ class OkHttpClientAdapter extends HttpClientAdapter {
     }
 
     @Override
+    public byte[] getEx(String url, Map<String, List<String>> params, Map<String, String> headers) throws IOException {
+        return request(new Request.Builder().url(buildUrlEx(url, params)).get(), headers);
+    }
+
+    @Override
     public byte[] postWithoutBody(String url, Map<String, String> urlParams, Map<String, String> headers) throws IOException {
         return post(buildUrl(url, urlParams).toString(), new HashMap<String, String>(), headers);
     }
@@ -131,13 +136,25 @@ class OkHttpClientAdapter extends HttpClientAdapter {
         return content;
     }
 
-    static private HttpUrl buildUrl(String url, Map<String, String> params) {
+    public String buildUrl(String url, Map<String, String> params) {
         HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
         if (null != params && !params.isEmpty()) {
             for (String name: params.keySet()) {
                 urlBuilder.addQueryParameter(name, params.get(name));
             }
         }
-        return urlBuilder.build();
+        return urlBuilder.build().toString();
+    }
+
+    public String buildUrlEx(String url, Map<String, List<String>> params) {
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        if (null != params && !params.isEmpty()) {
+            for (String name: params.keySet()) {
+                for (String value: params.get(name)) {
+                    urlBuilder.addQueryParameter(name, value);
+                }
+            }
+        }
+        return urlBuilder.build().toString();
     }
 }
