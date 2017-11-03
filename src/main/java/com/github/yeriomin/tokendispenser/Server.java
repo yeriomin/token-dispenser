@@ -40,12 +40,7 @@ public class Server {
     public static void main(String[] args) {
         Properties config = getConfig();
         String host = config.getProperty(PROPERTY_SPARK_HOST, "0.0.0.0");
-        int port = Integer.parseInt(config.getProperty(PROPERTY_SPARK_PORT, "8080"));
-        String hostDiy = System.getenv("OPENSHIFT_DIY_IP");
-        if (null != hostDiy && !hostDiy.isEmpty()) {
-            host = hostDiy;
-            port = Integer.parseInt(System.getenv("OPENSHIFT_DIY_PORT"));
-        }
+        int port = Integer.parseInt(System.getenv("PORT"));
         ipAddress(host);
         port(port);
         notFound("Not found");
