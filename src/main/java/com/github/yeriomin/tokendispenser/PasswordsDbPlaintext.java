@@ -35,7 +35,6 @@ public class PasswordsDbPlaintext implements PasswordsDbInterface {
 
     @Override
     public String get(String email) {
-        Server.LOG.info(email + (passwords.containsKey(email) ? "" : " NOT") + " found");
         return passwords.get(email);
     }
 

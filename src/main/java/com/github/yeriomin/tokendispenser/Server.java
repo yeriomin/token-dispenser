@@ -2,17 +2,13 @@ package com.github.yeriomin.tokendispenser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Request;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
+import java.util.*;
 
-import static spark.Spark.after;
-import static spark.Spark.before;
-import static spark.Spark.get;
-import static spark.Spark.ipAddress;
-import static spark.Spark.notFound;
-import static spark.Spark.port;
+import static spark.Spark.*;
 
 public class Server {
 
@@ -31,11 +27,52 @@ public class Server {
     static final String PROPERTY_MONGODB_DB = "mongodb-databaseNameStorage";
     static final String PROPERTY_MONGODB_COLLECTION = "mongodb-collectionName";
     static final String PROPERTY_EMAIL_RETRIEVAL = "enable-email-retrieval";
+    static final String PROPERTY_RATE_LIMITING = "rate-limiting";
+    static final String PROPERTY_RATE_LIMITING_MAX_REQUESTS = "rate-limiting-max-requests";
+    static final String PROPERTY_RATE_LIMITING_CONTROL_PERIOD = "rate-limiting-control-period";
+    static final String PROPERTY_RATE_LIMITING_EXPOSE_STATS_ENDPOINT = "rate-limiting-expose-stats-endpoint";
 
     static public final String STORAGE_MONGODB = "mongodb";
     static public final String STORAGE_PLAINTEXT = "plaintext";
 
     static PasswordsDbInterface passwords;
+    static Map<String, List<Long>> ips = new HashMap<>();
+    static Map<String, Integer> rateLimitHits = new HashMap<>();
+    static int rateLimitControlPeriod = 5 * 60 * 1000;
+    static int rateLimitRequests = 10;
+
+    static String getIp(Request request) {
+        String requestIp = request.headers("X-Forwarded-For");
+        return null == requestIp || requestIp.isEmpty() ? request.ip() : requestIp;
+    }
+
+    static void recordRequest(Request request) {
+        String ip = getIp(request);
+        if (!ips.containsKey(ip)) {
+            ips.put(ip, new ArrayList<>());
+        }
+        ips.get(ip).add(System.currentTimeMillis());
+    }
+
+    static boolean isSpam(Request request) {
+        String ip = getIp(request);
+        if (ips.containsKey(ip)) {
+            int recentRequestCount = 0;
+            for (Long timestamp: ips.get(ip)) {
+                if (timestamp > System.currentTimeMillis() - rateLimitControlPeriod) {
+                    recentRequestCount++;
+                }
+                if (recentRequestCount > rateLimitRequests) {
+                    if (!rateLimitHits.containsKey(ip)) {
+                        rateLimitHits.put(ip, 0);
+                    }
+                    rateLimitHits.put(ip, rateLimitHits.get(ip) + 1);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     public static void main(String[] args) {
         Properties config = getConfig();
@@ -59,7 +96,18 @@ public class Server {
         get("/token/email/:email", (req, res) -> new TokenResource().handle(req, res));
         get("/token-ac2dm/email/:email", (req, res) -> new TokenAc2dmResource().handle(req, res));
         if (config.getProperty(PROPERTY_EMAIL_RETRIEVAL, "false").equals("true")) {
+            LOG.info("Exposing /email endpoint");
             get("/email", (req, res) -> new EmailResource().handle(req, res));
+        }
+        if (config.getProperty(PROPERTY_RATE_LIMITING, "false").equals("true")) {
+            LOG.info("Enabling rate limiting");
+            rateLimitControlPeriod = Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_CONTROL_PERIOD, "300000"));
+            rateLimitRequests = Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_MAX_REQUESTS, "20"));
+            if (config.getProperty(PROPERTY_RATE_LIMITING_EXPOSE_STATS_ENDPOINT, "false").equals("true")) {
+                LOG.info("Exposing /stats endpoint");
+                get("/stats", (req, res) -> new StatsResource().get(req, res));
+                delete("/stats", (req, res) -> new StatsResource().delete(req, res));
+            }
         }
     }
 

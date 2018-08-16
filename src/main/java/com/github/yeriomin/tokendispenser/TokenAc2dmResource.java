@@ -16,22 +16,30 @@ import static spark.Spark.halt;
 public class TokenAc2dmResource {
 
     public String handle(Request request, Response response) {
+        Server.recordRequest(request);
+        if (Server.isSpam(request)) {
+            Server.LOG.error(request.ip() + " makes too many requests");
+            halt(429, "Try again later");
+        }
         String email = request.params("email");
         String password = Server.passwords.get(email);
         if (null == password || password.isEmpty()) {
+            Server.LOG.error(email + " not found");
             halt(404, "No password for this email");
         }
         int code = 500;
         String message;
         try {
-            return getToken(email, password);
+            String token = getToken(email, password);
+            Server.LOG.warn("Success");
+            return token;
         } catch (GooglePlayException e) {
             if (e.getCode() >= 400) {
                 code = e.getCode();
             }
             message = e.getMessage();
             Server.LOG.warn(e.getClass().getName() + ": " + message);
-            halt(code, message);
+            halt(code, "Google responded with: " + message);
         } catch (IOException e) {
             message = e.getMessage();
             Server.LOG.error(e.getClass().getName() + ": " + message);
