@@ -11,15 +11,20 @@ import java.util.Properties;
 import spark.Request;
 import spark.Response;
 
+import static com.github.yeriomin.tokendispenser.Server.PROPERTY_RATE_LIMITING;
+import static com.github.yeriomin.tokendispenser.Server.rateLimitControlPeriod;
 import static spark.Spark.halt;
 
 public class TokenAc2dmResource {
 
     public String handle(Request request, Response response) {
-        Server.recordRequest(request);
-        if (Server.isSpam(request)) {
-            Server.LOG.error(request.ip() + " makes too many requests");
-            halt(429, "Try again later");
+        if (Server.getConfig().getProperty(PROPERTY_RATE_LIMITING, "false").equals("true")) {
+            Server.recordRequest(request);
+            if (Server.isSpam(request)) {
+                Server.LOG.error(Server.longToIp(Server.getIp(request)) + " makes too many requests");
+                response.header("Retry-After", Integer.toString(rateLimitControlPeriod/1000));
+                halt(429, "Try again later");
+            }
         }
         String email = request.params("email");
         String password = Server.passwords.get(email);

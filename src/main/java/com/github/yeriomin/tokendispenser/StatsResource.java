@@ -14,6 +14,7 @@ public class StatsResource {
     static private final String MODE_IPS_BY_REQUEST_COUNT = "ipsByRequestCount";
     static private final String MODE_REQUESTS_BY_DAY = "requestsByDay";
     static private final String MODE_RATE_LIMIT_HITS = "rateLimitHits";
+    static private final String MODE_TOTAL_RATE_LIMIT_HITS = "totalRateLimitHits";
     static private final String MODE_TOTAL = "total";
 
     public String get(Request request, Response response) {
@@ -22,21 +23,18 @@ public class StatsResource {
         if (null == mode || mode.length() == 0) {
             mode = MODE_IPS_BY_REQUEST_COUNT;
         }
-        try {
-            if (Server.ips.isEmpty()) {
-                return "No stats recorded yet";
-            } else if (MODE_REQUESTS_BY_DAY.equals(mode)) {
-                return unique ? getRequestsByDayUnique() : getRequestsByDay();
-            } else if (MODE_RATE_LIMIT_HITS.equals(mode)) {
-                return getRateLimitHits();
-            } else if (MODE_TOTAL.equals(mode)) {
-                return unique ? getTotalRequestsUnique() : getTotalRequests();
-            } else {
-                return getRequestsByIp();
-            }
-        } catch (Throwable e) {
-            Server.LOG.error(e.getMessage(), e);
-            return e.getMessage();
+        if (Server.ips.isEmpty()) {
+            return "No stats recorded yet";
+        } else if (MODE_REQUESTS_BY_DAY.equals(mode)) {
+            return unique ? getRequestsByDayUnique() : getRequestsByDay();
+        } else if (MODE_RATE_LIMIT_HITS.equals(mode)) {
+            return getRateLimitHits();
+        } else if (MODE_TOTAL_RATE_LIMIT_HITS.equals(mode)) {
+            return getTotalRateLimitHits();
+        } else if (MODE_TOTAL.equals(mode)) {
+            return unique ? getTotalRequestsUnique() : getTotalRequests();
+        } else {
+            return getRequestsByIp();
         }
     }
 
@@ -47,7 +45,7 @@ public class StatsResource {
     }
 
     private String getRequestsByDay() {
-        Map<String, Integer> requestsByDay = new LinkedHashMap<>();
+        Map<String, Integer> requestsByDay = new TreeMap<>();
         for (List<Long> timestamps: Server.ips.values()) {
             for (Long timestamp: timestamps) {
                 String day = new SimpleDateFormat("yyyy-MM-dd").format(new Date(timestamp));
@@ -61,8 +59,8 @@ public class StatsResource {
     }
 
     private String getRequestsByDayUnique() {
-        Map<String, Set<String>> ipsByDay = new HashMap<>();
-        for (String ip: Server.ips.keySet()) {
+        Map<String, Set<Long>> ipsByDay = new HashMap<>();
+        for (long ip: Server.ips.keySet()) {
             for (Long timestamp: Server.ips.get(ip)) {
                 String day = new SimpleDateFormat("yyyy-MM-dd").format(new Date(timestamp));
                 if (!ipsByDay.containsKey(day)) {
@@ -71,7 +69,7 @@ public class StatsResource {
                 ipsByDay.get(day).add(ip);
             }
         }
-        Map<String, Integer> requestsByDay = new LinkedHashMap<>();
+        Map<String, Integer> requestsByDay = new TreeMap<>();
         for (String day: ipsByDay.keySet()) {
             requestsByDay.put(day, ipsByDay.get(day).size());
         }
@@ -90,10 +88,18 @@ public class StatsResource {
         return Integer.toString(Server.ips.keySet().size());
     }
 
+    private String getTotalRateLimitHits() {
+        int total = 0;
+        for (long ip: Server.rateLimitHits.keySet()) {
+            total += Server.rateLimitHits.get(ip);
+        }
+        return Integer.toString(total);
+    }
+
     private String getRequestsByIp() {
         Map<String, Integer> requestsByIp = new HashMap<>();
-        for (String ip: Server.ips.keySet()) {
-            requestsByIp.put(ip, Server.ips.get(ip).size());
+        for (long ip: Server.ips.keySet()) {
+            requestsByIp.put(Server.longToIp(ip), Server.ips.get(ip).size());
         }
         try {
             return mapToString(sortByValue(requestsByIp, false));
@@ -104,7 +110,11 @@ public class StatsResource {
     }
 
     private String getRateLimitHits() {
-        return mapToString(sortByValue(Server.rateLimitHits, false));
+        Map<String, Integer> rateLimitHits = new HashMap<>();
+        for (long ip: Server.rateLimitHits.keySet()) {
+            rateLimitHits.put(Server.longToIp(ip), Server.rateLimitHits.get(ip));
+        }
+        return mapToString(sortByValue(rateLimitHits, false));
     }
 
     private String mapToString(Map map) {
@@ -113,10 +123,6 @@ public class StatsResource {
             sb.append(key).append("\t\t").append(map.get(key)).append("\n");
         }
         return sb.toString();
-    }
-
-    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        return sortByValue(map, true);
     }
 
     private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map, boolean asc) {

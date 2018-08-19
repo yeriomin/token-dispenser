@@ -36,18 +36,35 @@ public class Server {
     static public final String STORAGE_PLAINTEXT = "plaintext";
 
     static PasswordsDbInterface passwords;
-    static Map<String, List<Long>> ips = new HashMap<>();
-    static Map<String, Integer> rateLimitHits = new HashMap<>();
+    static Map<Long, List<Long>> ips = new HashMap<>();
+    static Map<Long, Integer> rateLimitHits = new HashMap<>();
     static int rateLimitControlPeriod = 5 * 60 * 1000;
     static int rateLimitRequests = 10;
 
-    static String getIp(Request request) {
+    static long getIp(Request request) {
         String requestIp = request.headers("X-Forwarded-For");
-        return null == requestIp || requestIp.isEmpty() ? request.ip() : requestIp;
+        return ipToLong((null == requestIp || requestIp.isEmpty()) ? request.ip() : requestIp);
+    }
+
+    private static long ipToLong(String address) {
+        String[] split = address.split("\\.");
+        if (split.length < 4) {
+            return 0;
+        }
+        long result = 0;
+        for (int i = 0; i < split.length; i++) {
+            int power = 3 - i;
+            result += (Integer.parseInt(split[i])%256 * Math.pow(256,power));
+        }
+        return result;
+    }
+
+    public static String longToIp(long ip) {
+        return ((ip >> 24 ) & 0xFF) + "." + ((ip >> 16 ) & 0xFF) + "." + ((ip >> 8 ) & 0xFF) + "." + (ip & 0xFF);
     }
 
     static void recordRequest(Request request) {
-        String ip = getIp(request);
+        long ip = getIp(request);
         if (!ips.containsKey(ip)) {
             ips.put(ip, new ArrayList<>());
         }
@@ -55,7 +72,7 @@ public class Server {
     }
 
     static boolean isSpam(Request request) {
-        String ip = getIp(request);
+        long ip = getIp(request);
         if (ips.containsKey(ip)) {
             int recentRequestCount = 0;
             for (Long timestamp: ips.get(ip)) {
@@ -82,6 +99,10 @@ public class Server {
         if (null != hostDiy && !hostDiy.isEmpty()) {
             host = hostDiy;
             port = Integer.parseInt(System.getenv("OPENSHIFT_DIY_PORT"));
+        }
+        int portEnv = Integer.parseInt(System.getenv("PORT"));
+        if (portEnv > 0) {
+            port = portEnv;
         }
         ipAddress(host);
         port(port);
