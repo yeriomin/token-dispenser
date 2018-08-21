@@ -38,6 +38,7 @@ public class Server {
     static PasswordsDbInterface passwords;
     static Map<Long, List<Long>> ips = new HashMap<>();
     static Map<Long, Integer> rateLimitHits = new HashMap<>();
+    static Map<Integer, Integer> tokenRetrievalResults = new HashMap<>();
     static int rateLimitControlPeriod = 5 * 60 * 1000;
     static int rateLimitRequests = 10;
 
@@ -59,7 +60,7 @@ public class Server {
         return result;
     }
 
-    public static String longToIp(long ip) {
+    static String longToIp(long ip) {
         return ((ip >> 24 ) & 0xFF) + "." + ((ip >> 16 ) & 0xFF) + "." + ((ip >> 8 ) & 0xFF) + "." + (ip & 0xFF);
     }
 
@@ -69,6 +70,13 @@ public class Server {
             ips.put(ip, new ArrayList<>());
         }
         ips.get(ip).add(System.currentTimeMillis());
+    }
+
+    static void recordResult(int responseCode) {
+        if (!tokenRetrievalResults.containsKey(responseCode)) {
+            tokenRetrievalResults.put(responseCode, 0);
+        }
+        tokenRetrievalResults.put(responseCode, tokenRetrievalResults.get(responseCode) + 1);
     }
 
     static boolean isSpam(Request request) {
@@ -100,9 +108,10 @@ public class Server {
             host = hostDiy;
             port = Integer.parseInt(System.getenv("OPENSHIFT_DIY_PORT"));
         }
-        int portEnv = Integer.parseInt(System.getenv("PORT"));
-        if (portEnv > 0) {
-            port = portEnv;
+        try {
+            port = Integer.parseInt(System.getenv("PORT"));
+        } catch (NumberFormatException e) {
+            // Apparently, environment is not heroku
         }
         ipAddress(host);
         port(port);

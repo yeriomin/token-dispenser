@@ -15,6 +15,7 @@ public class StatsResource {
     static private final String MODE_REQUESTS_BY_DAY = "requestsByDay";
     static private final String MODE_RATE_LIMIT_HITS = "rateLimitHits";
     static private final String MODE_TOTAL_RATE_LIMIT_HITS = "totalRateLimitHits";
+    static private final String MODE_TOKEN_RETRIEVAL_RESULTS = "tokenRetrievalResults";
     static private final String MODE_TOTAL = "total";
 
     public String get(Request request, Response response) {
@@ -31,6 +32,8 @@ public class StatsResource {
             return getRateLimitHits();
         } else if (MODE_TOTAL_RATE_LIMIT_HITS.equals(mode)) {
             return getTotalRateLimitHits();
+        } else if (MODE_TOKEN_RETRIEVAL_RESULTS.equals(mode)) {
+            return getTokenRetrievalResults();
         } else if (MODE_TOTAL.equals(mode)) {
             return unique ? getTotalRequestsUnique() : getTotalRequests();
         } else {
@@ -41,6 +44,7 @@ public class StatsResource {
     public String delete(Request request, Response response) {
         Server.ips.clear();
         Server.rateLimitHits.clear();
+        Server.tokenRetrievalResults.clear();
         return "Stats cleared";
     }
 
@@ -115,6 +119,10 @@ public class StatsResource {
             rateLimitHits.put(Server.longToIp(ip), Server.rateLimitHits.get(ip));
         }
         return mapToString(sortByValue(rateLimitHits, false));
+    }
+
+    private String getTokenRetrievalResults() {
+        return mapToString(Server.tokenRetrievalResults);
     }
 
     private String mapToString(Map map) {

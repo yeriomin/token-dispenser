@@ -23,6 +23,7 @@ public class TokenAc2dmResource {
             if (Server.isSpam(request)) {
                 Server.LOG.error(Server.longToIp(Server.getIp(request)) + " makes too many requests");
                 response.header("Retry-After", Integer.toString(rateLimitControlPeriod/1000));
+                Server.recordResult(429);
                 halt(429, "Try again later");
             }
         }
@@ -30,6 +31,7 @@ public class TokenAc2dmResource {
         String password = Server.passwords.get(email);
         if (null == password || password.isEmpty()) {
             Server.LOG.error(email + " not found");
+            Server.recordResult(404);
             halt(404, "No password for this email");
         }
         int code = 500;
@@ -37,6 +39,7 @@ public class TokenAc2dmResource {
         try {
             String token = getToken(email, password);
             Server.LOG.warn("Success");
+            Server.recordResult(200);
             return token;
         } catch (GooglePlayException e) {
             if (e.getCode() >= 400) {
@@ -44,12 +47,15 @@ public class TokenAc2dmResource {
             }
             message = e.getMessage();
             Server.LOG.warn(e.getClass().getName() + ": " + message);
+            Server.recordResult(code);
             halt(code, "Google responded with: " + message);
         } catch (IOException e) {
             message = e.getMessage();
             Server.LOG.error(e.getClass().getName() + ": " + message);
+            Server.recordResult(code);
             halt(code, message);
         }
+        Server.recordResult(code);
         return "";
     }
 
