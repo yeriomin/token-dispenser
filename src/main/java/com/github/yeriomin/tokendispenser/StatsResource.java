@@ -18,13 +18,15 @@ public class StatsResource {
     static private final String MODE_TOKEN_RETRIEVAL_RESULTS = "tokenRetrievalResults";
     static private final String MODE_TOTAL = "total";
 
+    static private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+
     public String get(Request request, Response response) {
         String mode = request.queryParams(PARAM_MODE);
         boolean unique = null != request.queryParams(PARAM_UNIQUE) && request.queryParams(PARAM_UNIQUE).equals("true");
         if (null == mode || mode.length() == 0) {
             mode = MODE_IPS_BY_REQUEST_COUNT;
         }
-        if (Server.ips.isEmpty()) {
+        if (Server.stats.getIps().isEmpty()) {
             return "No stats recorded yet";
         } else if (MODE_REQUESTS_BY_DAY.equals(mode)) {
             return unique ? getRequestsByDayUnique() : getRequestsByDay();
@@ -42,17 +44,18 @@ public class StatsResource {
     }
 
     public String delete(Request request, Response response) {
-        Server.ips.clear();
-        Server.rateLimitHits.clear();
-        Server.tokenRetrievalResults.clear();
+        Server.stats.clear();
         return "Stats cleared";
     }
 
     private String getRequestsByDay() {
         Map<String, Integer> requestsByDay = new TreeMap<>();
-        for (List<Long> timestamps: Server.ips.values()) {
+        for (List<Long> timestamps: Server.stats.getIps().values()) {
             for (Long timestamp: timestamps) {
-                String day = new SimpleDateFormat("yyyy-MM-dd").format(new Date(timestamp));
+                if (null == timestamp || timestamp == 0) {
+                    continue;
+                }
+                String day = dateFormatter.format(new Date(timestamp));
                 if (!requestsByDay.containsKey(day)) {
                     requestsByDay.put(day, 0);
                 }
@@ -64,9 +67,12 @@ public class StatsResource {
 
     private String getRequestsByDayUnique() {
         Map<String, Set<Long>> ipsByDay = new HashMap<>();
-        for (long ip: Server.ips.keySet()) {
-            for (Long timestamp: Server.ips.get(ip)) {
-                String day = new SimpleDateFormat("yyyy-MM-dd").format(new Date(timestamp));
+        for (long ip: Server.stats.getIps().keySet()) {
+            for (Long timestamp: Server.stats.getIps().get(ip)) {
+                if (null == timestamp || timestamp == 0) {
+                    continue;
+                }
+                String day = dateFormatter.format(new Date(timestamp));
                 if (!ipsByDay.containsKey(day)) {
                     ipsByDay.put(day, new HashSet<>());
                 }
@@ -82,28 +88,28 @@ public class StatsResource {
 
     private String getTotalRequests() {
         int total = 0;
-        for (List<Long> timestamps: Server.ips.values()) {
+        for (List<Long> timestamps: Server.stats.getIps().values()) {
             total += timestamps.size();
         }
         return Integer.toString(total);
     }
 
     private String getTotalRequestsUnique() {
-        return Integer.toString(Server.ips.keySet().size());
+        return Integer.toString(Server.stats.getIps().keySet().size());
     }
 
     private String getTotalRateLimitHits() {
         int total = 0;
-        for (long ip: Server.rateLimitHits.keySet()) {
-            total += Server.rateLimitHits.get(ip);
+        for (long ip: Server.stats.getRateLimitHits().keySet()) {
+            total += Server.stats.getRateLimitHits().get(ip);
         }
         return Integer.toString(total);
     }
 
     private String getRequestsByIp() {
         Map<String, Integer> requestsByIp = new HashMap<>();
-        for (long ip: Server.ips.keySet()) {
-            requestsByIp.put(Server.longToIp(ip), Server.ips.get(ip).size());
+        for (long ip: Server.stats.getIps().keySet()) {
+            requestsByIp.put(Server.longToIp(ip), Server.stats.getIps().get(ip).size());
         }
         try {
             return mapToString(sortByValue(requestsByIp, false));
@@ -115,14 +121,14 @@ public class StatsResource {
 
     private String getRateLimitHits() {
         Map<String, Integer> rateLimitHits = new HashMap<>();
-        for (long ip: Server.rateLimitHits.keySet()) {
-            rateLimitHits.put(Server.longToIp(ip), Server.rateLimitHits.get(ip));
+        for (long ip: Server.stats.getRateLimitHits().keySet()) {
+            rateLimitHits.put(Server.longToIp(ip), Server.stats.getRateLimitHits().get(ip));
         }
         return mapToString(sortByValue(rateLimitHits, false));
     }
 
     private String getTokenRetrievalResults() {
-        return mapToString(Server.tokenRetrievalResults);
+        return mapToString(Server.stats.getTokenRetrievalResults());
     }
 
     private String mapToString(Map map) {

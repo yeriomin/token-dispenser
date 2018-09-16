@@ -36,11 +36,7 @@ public class Server {
     static public final String STORAGE_PLAINTEXT = "plaintext";
 
     static PasswordsDbInterface passwords;
-    static Map<Long, List<Long>> ips = new HashMap<>();
-    static Map<Long, Integer> rateLimitHits = new HashMap<>();
-    static Map<Integer, Integer> tokenRetrievalResults = new HashMap<>();
-    static int rateLimitControlPeriod = 5 * 60 * 1000;
-    static int rateLimitRequests = 10;
+    static StatsStorage stats;
 
     static long getIp(Request request) {
         String requestIp = request.headers("X-Forwarded-For");
@@ -64,41 +60,6 @@ public class Server {
         return ((ip >> 24 ) & 0xFF) + "." + ((ip >> 16 ) & 0xFF) + "." + ((ip >> 8 ) & 0xFF) + "." + (ip & 0xFF);
     }
 
-    static void recordRequest(Request request) {
-        long ip = getIp(request);
-        if (!ips.containsKey(ip)) {
-            ips.put(ip, new ArrayList<>());
-        }
-        ips.get(ip).add(System.currentTimeMillis());
-    }
-
-    static void recordResult(int responseCode) {
-        if (!tokenRetrievalResults.containsKey(responseCode)) {
-            tokenRetrievalResults.put(responseCode, 0);
-        }
-        tokenRetrievalResults.put(responseCode, tokenRetrievalResults.get(responseCode) + 1);
-    }
-
-    static boolean isSpam(Request request) {
-        long ip = getIp(request);
-        if (ips.containsKey(ip)) {
-            int recentRequestCount = 0;
-            for (Long timestamp: ips.get(ip)) {
-                if (timestamp > System.currentTimeMillis() - rateLimitControlPeriod) {
-                    recentRequestCount++;
-                }
-                if (recentRequestCount > rateLimitRequests) {
-                    if (!rateLimitHits.containsKey(ip)) {
-                        rateLimitHits.put(ip, 0);
-                    }
-                    rateLimitHits.put(ip, rateLimitHits.get(ip) + 1);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public static void main(String[] args) {
         Properties config = getConfig();
         String host = config.getProperty(PROPERTY_SPARK_HOST, "0.0.0.0");
@@ -113,6 +74,8 @@ public class Server {
         } catch (NumberFormatException e) {
             // Apparently, environment is not heroku
         }
+        // Google auth requests are not fast, so lets limit max simultaneous threads
+        threadPool(16, 2, 5000);
         ipAddress(host);
         port(port);
         notFound("Not found");
@@ -131,13 +94,16 @@ public class Server {
         }
         if (config.getProperty(PROPERTY_RATE_LIMITING, "false").equals("true")) {
             LOG.info("Enabling rate limiting");
-            rateLimitControlPeriod = Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_CONTROL_PERIOD, "300000"));
-            rateLimitRequests = Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_MAX_REQUESTS, "20"));
             if (config.getProperty(PROPERTY_RATE_LIMITING_EXPOSE_STATS_ENDPOINT, "false").equals("true")) {
                 LOG.info("Exposing /stats endpoint");
                 get("/stats", (req, res) -> new StatsResource().get(req, res));
                 delete("/stats", (req, res) -> new StatsResource().delete(req, res));
+                stats = new DebugStatsStorage();
+            } else {
+                stats = new ReleaseStatsStorage();
             }
+            stats.setRateLimitControlPeriod(Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_CONTROL_PERIOD, "300000")));
+            stats.setRateLimitRequests(Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_MAX_REQUESTS, "20")));
         }
     }
 
