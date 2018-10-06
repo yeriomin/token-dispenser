@@ -12,7 +12,6 @@ public class DebugStatsStorage extends StatsStorage {
 
     private Map<Long, List<Long>> ips = new ConcurrentHashMap<>();
     private Map<Long, Integer> rateLimitHits = new ConcurrentHashMap<>();
-    private Map<Integer, Integer> tokenRetrievalResults = new ConcurrentHashMap<>();
 
     @Override
     public Map<Long, List<Long>> getIps() {
@@ -25,12 +24,8 @@ public class DebugStatsStorage extends StatsStorage {
     }
 
     @Override
-    public Map<Integer, Integer> getTokenRetrievalResults() {
-        return tokenRetrievalResults;
-    }
-
-    @Override
     public boolean isSpam(Request request) {
+        recordRequest(request);
         long ip = Server.getIp(request);
         if (ips.containsKey(ip)) {
             int recentRequestCount = 0;
@@ -51,18 +46,10 @@ public class DebugStatsStorage extends StatsStorage {
     }
 
     @Override
-    public void recordResult(int responseCode) {
-        if (!tokenRetrievalResults.containsKey(responseCode)) {
-            tokenRetrievalResults.put(responseCode, 0);
-        }
-        tokenRetrievalResults.put(responseCode, tokenRetrievalResults.get(responseCode) + 1);
-    }
-
-    @Override
     public void clear() {
+        super.clear();
         ips.clear();
         rateLimitHits.clear();
-        tokenRetrievalResults.clear();
     }
 
     @Override

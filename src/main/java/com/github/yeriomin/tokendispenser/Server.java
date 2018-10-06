@@ -31,6 +31,7 @@ public class Server {
     static final String PROPERTY_RATE_LIMITING_MAX_REQUESTS = "rate-limiting-max-requests";
     static final String PROPERTY_RATE_LIMITING_CONTROL_PERIOD = "rate-limiting-control-period";
     static final String PROPERTY_RATE_LIMITING_EXPOSE_STATS_ENDPOINT = "rate-limiting-expose-stats-endpoint";
+    static final String PROPERTY_RATE_LIMITING_DEBUG = "rate-limiting-debug";
 
     static public final String STORAGE_MONGODB = "mongodb";
     static public final String STORAGE_PLAINTEXT = "plaintext";
@@ -94,13 +95,14 @@ public class Server {
         }
         if (config.getProperty(PROPERTY_RATE_LIMITING, "false").equals("true")) {
             LOG.info("Enabling rate limiting");
+            stats = config.getProperty(PROPERTY_RATE_LIMITING_DEBUG, "false").equals("true")
+                ? new DebugStatsStorage()
+                : new ReleaseStatsStorage()
+            ;
             if (config.getProperty(PROPERTY_RATE_LIMITING_EXPOSE_STATS_ENDPOINT, "false").equals("true")) {
                 LOG.info("Exposing /stats endpoint");
                 get("/stats", (req, res) -> new StatsResource().get(req, res));
                 delete("/stats", (req, res) -> new StatsResource().delete(req, res));
-                stats = new DebugStatsStorage();
-            } else {
-                stats = new ReleaseStatsStorage();
             }
             stats.setRateLimitControlPeriod(Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_CONTROL_PERIOD, "300000")));
             stats.setRateLimitRequests(Integer.parseInt(config.getProperty(PROPERTY_RATE_LIMITING_MAX_REQUESTS, "20")));

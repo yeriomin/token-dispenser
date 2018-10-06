@@ -26,7 +26,9 @@ public class StatsResource {
         if (null == mode || mode.length() == 0) {
             mode = MODE_IPS_BY_REQUEST_COUNT;
         }
-        if (Server.stats.getIps().isEmpty()) {
+        if (MODE_TOKEN_RETRIEVAL_RESULTS.equals(mode)) {
+            return getTokenRetrievalResults();
+        } else if (Server.stats.getIps().isEmpty()) {
             return "No stats recorded yet";
         } else if (MODE_REQUESTS_BY_DAY.equals(mode)) {
             return unique ? getRequestsByDayUnique() : getRequestsByDay();
@@ -34,8 +36,6 @@ public class StatsResource {
             return getRateLimitHits();
         } else if (MODE_TOTAL_RATE_LIMIT_HITS.equals(mode)) {
             return getTotalRateLimitHits();
-        } else if (MODE_TOKEN_RETRIEVAL_RESULTS.equals(mode)) {
-            return getTokenRetrievalResults();
         } else if (MODE_TOTAL.equals(mode)) {
             return unique ? getTotalRequestsUnique() : getTotalRequests();
         } else {

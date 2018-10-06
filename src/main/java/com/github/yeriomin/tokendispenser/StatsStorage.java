@@ -4,19 +4,18 @@ import spark.Request;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 abstract public class StatsStorage {
 
     protected int rateLimitControlPeriod;
     protected int rateLimitRequests;
+    private Map<Integer, Integer> tokenRetrievalResults = new ConcurrentHashMap<>();
 
     abstract public Map<Long, List<Long>> getIps();
     abstract public Map<Long, Integer> getRateLimitHits();
-    abstract public Map<Integer, Integer> getTokenRetrievalResults();
 
     abstract public boolean isSpam(Request request);
-    abstract public void recordResult(int responseCode);
-    abstract public void clear();
 
     abstract protected void recordRequest(Request request);
 
@@ -30,5 +29,20 @@ abstract public class StatsStorage {
 
     public void setRateLimitRequests(int rateLimitRequests) {
         this.rateLimitRequests = rateLimitRequests;
+    }
+
+    public void clear() {
+        tokenRetrievalResults.clear();
+    }
+
+    public Map<Integer, Integer> getTokenRetrievalResults() {
+        return tokenRetrievalResults;
+    }
+
+    public void recordResult(int responseCode) {
+        if (!tokenRetrievalResults.containsKey(responseCode)) {
+            tokenRetrievalResults.put(responseCode, 0);
+        }
+        tokenRetrievalResults.put(responseCode, tokenRetrievalResults.get(responseCode) + 1);
     }
 }

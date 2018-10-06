@@ -34,22 +34,14 @@ public class ReleaseStatsStorage extends StatsStorage {
     }
 
     @Override
-    public Map<Integer, Integer> getTokenRetrievalResults() {
-        return new HashMap<>();
-    }
-
-    @Override
     public boolean isSpam(Request request) {
         recordRequest(request);
         return ips.tooMany(Server.getIp(request));
     }
 
     @Override
-    public void recordResult(int responseCode) {
-    }
-
-    @Override
     public void clear() {
+        super.clear();
         ips.cleanup();
     }
 
